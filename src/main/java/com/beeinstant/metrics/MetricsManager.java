@@ -138,6 +138,8 @@ public class MetricsManager {
         }
         if (MetricsManager.instance != null) {
             MetricsManager.instance = null;
+            MetricsManager.poolManager.shutdown();
+            MetricsManager.poolManager = null;
             MetricsManager.httpClient = null;
             MetricsManager.rootMetricsLogger = null;
         }
