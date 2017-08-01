@@ -226,13 +226,14 @@ public class MetricsManager {
                     uri += "&publicKey=" + URLEncoder.encode(publicKey, "UTF-8");
                 }
 
-                poolManager.closeExpiredConnections();
-                poolManager.closeIdleConnections(60, TimeUnit.SECONDS);
-
                 HttpPost putMetricCommand = new HttpPost(uri);
-                putMetricCommand.setEntity(entity);
-                HttpResponse response = httpClient.execute(beeInstantHost, putMetricCommand);
-                LOG.info("Response: " + response.getStatusLine().getStatusCode());
+                try {
+                    putMetricCommand.setEntity(entity);
+                    HttpResponse response = httpClient.execute(beeInstantHost, putMetricCommand);
+                    LOG.info("Response: " + response.getStatusLine().getStatusCode());
+                } finally {
+                    putMetricCommand.releaseConnection();
+                }
 
             } catch (Throwable e) {
                 LOG.error("Fail to emit metrics", e);
