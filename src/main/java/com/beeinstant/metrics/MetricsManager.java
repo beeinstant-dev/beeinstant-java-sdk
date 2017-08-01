@@ -67,6 +67,7 @@ public class MetricsManager {
 
     private static final String METRIC_ERRORS = "MetricErrors";
     private static CloseableHttpClient httpClient = null;
+    private static PoolingHttpClientConnectionManager poolManager = null;
     private static MetricsLogger rootMetricsLogger = null;
     private static volatile MetricsManager instance = null;
     private static ScheduledExecutorService executorService = null;
@@ -100,8 +101,9 @@ public class MetricsManager {
                 if (MetricsManager.instance == null) {
                     MetricsManager.instance = new MetricsManager(serviceName, hostInfo);
                     MetricsManager.rootMetricsLogger = MetricsManager.instance.metricsLoggers.computeIfAbsent("service=" + serviceName, MetricsLogger::new);
+                    MetricsManager.poolManager = new PoolingHttpClientConnectionManager(Integer.MAX_VALUE, TimeUnit.DAYS); //no more than 2 concurrent connections per given route
                     MetricsManager.httpClient = HttpClients.custom()
-                            .setConnectionManager(new PoolingHttpClientConnectionManager(Integer.MAX_VALUE, TimeUnit.DAYS)) //no more than 2 concurrent connections per given route
+                            .setConnectionManager(poolManager)
                             .setKeepAliveStrategy((response, context) -> 60000)
                             .setRetryHandler(new DefaultHttpRequestRetryHandler()) // 3 times retry by default
                             .build();
@@ -223,6 +225,9 @@ public class MetricsManager {
                     uri += "?signature=" + URLEncoder.encode(signature, "UTF-8");
                     uri += "&publicKey=" + URLEncoder.encode(publicKey, "UTF-8");
                 }
+
+                poolManager.closeExpiredConnections();
+                poolManager.closeIdleConnections(60, TimeUnit.SECONDS);
 
                 HttpPost putMetricCommand = new HttpPost(uri);
                 putMetricCommand.setEntity(entity);
