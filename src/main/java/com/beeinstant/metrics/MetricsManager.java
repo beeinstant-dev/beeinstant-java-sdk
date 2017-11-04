@@ -103,7 +103,7 @@ public class MetricsManager {
             synchronized (MetricsManager.class) {
                 if (MetricsManager.instance == null) {
                     MetricsManager.instance = new MetricsManager(serviceName, env, hostInfo);
-                    String envDimension = "";
+                    String envDimension = EMPTY_STRING;
                     if (env.trim().length() > 0) {
                         envDimension = ",env=" + env.trim();
                     }
@@ -179,7 +179,7 @@ public class MetricsManager {
      * @param serviceName, a name to identify your service
      */
     public static void init(final String serviceName) {
-        MetricsManager.init(serviceName, "");
+        MetricsManager.init(serviceName, EMPTY_STRING);
     }
 
     /**
